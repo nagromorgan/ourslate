@@ -63,8 +63,28 @@
     .feature:last-child { border-bottom: none; }
     .feature h2 { font-size: 1.05rem; margin: 0 0 4px; }
     .feature p { margin: 0; color: var(--muted); }
-    .contact { text-align: center; margin-top: 40px; }
-    .contact p { color: var(--muted); margin: 0 0 16px; }
+    .contact { margin-top: 40px; }
+    .contact h2 { text-align: center; font-size: 1.3rem; margin: 0 0 4px; }
+    .contact .intro { text-align: center; color: var(--muted); margin: 0 0 16px; }
+    .contact form { padding: 24px; display: grid; gap: 16px; }
+    .contact label { display: grid; gap: 6px; font-weight: 600; font-size: 0.95rem; }
+    .contact input, .contact textarea {
+      font: inherit;
+      font-weight: 400;
+      color: var(--ink);
+      background: var(--background);
+      border: 1px solid var(--hairline);
+      border-radius: 12px;
+      padding: 12px 14px;
+      width: 100%;
+    }
+    .contact textarea { min-height: 140px; resize: vertical; }
+    .contact input:focus, .contact textarea:focus { outline: 2px solid var(--green); outline-offset: 1px; }
+    .contact .honeypot { position: absolute; left: -9999px; }
+    .contact .button { border: none; font: inherit; font-weight: 600; cursor: pointer; justify-self: center; }
+    .contact .button:disabled { opacity: 0.6; cursor: default; }
+    .contact .status { text-align: center; color: var(--muted); margin: 0; }
+    .contact .status:empty { display: none; }
     .button {
       display: inline-block;
       background: var(--green);
@@ -115,12 +135,55 @@
       </div>
     </section>
 
-    <section class="contact">
-      <p>Questions, feedback or support?</p>
-      <a class="button" href="mailto:morgan@redwren.ai">Email morgan@redwren.ai</a>
+    <section class="contact" aria-labelledby="contact-heading">
+      <h2 id="contact-heading">Get in touch</h2>
+      <p class="intro">Questions, feedback or support? Send a message and we'll reply by email.</p>
+      <!-- FormSubmit emails each message on, with the sender's address as the reply-to. -->
+      <form class="card" id="contact-form" action="https://formsubmit.co/morgan@redwren.ai" method="POST">
+        <input type="hidden" name="_subject" value="OurSlate contact form">
+        <input type="hidden" name="_template" value="table">
+        <input type="text" name="_honey" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <label>Name
+          <input type="text" name="name" autocomplete="name" required>
+        </label>
+        <label>Email
+          <input type="email" name="email" autocomplete="email" required>
+        </label>
+        <label>Message
+          <textarea name="message" required></textarea>
+        </label>
+        <button class="button" type="submit">Send message</button>
+        <p class="status" id="contact-status" role="status"></p>
+      </form>
     </section>
 
     <footer>OurSlate for iPhone · <a href="privacy.html" style="color: inherit;">Privacy Policy</a></footer>
   </main>
+  <script>
+    // Send without leaving the page; without JavaScript the form posts normally instead.
+    const form = document.getElementById("contact-form");
+    const status = document.getElementById("contact-status");
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = form.querySelector("button");
+      button.disabled = true;
+      status.textContent = "Sending…";
+      try {
+        const response = await fetch(form.action.replace("formsubmit.co/", "formsubmit.co/ajax/"), {
+          method: "POST",
+          headers: { Accept: "application/json" },
+          body: new FormData(form),
+        });
+        const result = await response.json();
+        if (!response.ok || String(result.success) !== "true") throw new Error(result.message);
+        form.reset();
+        status.textContent = "Thanks! Your message is on its way.";
+      } catch {
+        status.textContent = "Sorry, that didn't send. Please try again in a moment.";
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
