@@ -174,12 +174,16 @@
           headers: { Accept: "application/json" },
           body: new FormData(form),
         });
-        const result = await response.json();
-        if (!response.ok || String(result.success) !== "true") throw new Error(result.message);
-        form.reset();
-        status.textContent = "Thanks! Your message is on its way.";
+        const result = await response.json().catch(() => ({}));
+        if (response.ok && String(result.success) === "true") {
+          form.reset();
+          status.textContent = "Thanks! Your message is on its way.";
+        } else {
+          // FormSubmit explains what went wrong, such as the form still waiting for activation.
+          status.textContent = result.message || "Sorry, that didn't send. Please try again in a moment.";
+        }
       } catch {
-        status.textContent = "Sorry, that didn't send. Please try again in a moment.";
+        status.textContent = "Sorry, that didn't send. Please check your connection and try again.";
       } finally {
         button.disabled = false;
       }
