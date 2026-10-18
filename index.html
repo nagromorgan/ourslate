@@ -53,6 +53,61 @@
     .tagline { font-size: 1.2rem; color: var(--muted); margin: 0; }
     .app-store { display: inline-block; margin-top: 24px; }
     .app-store img { display: block; height: 54px; width: auto; }
+    .showcase { margin: 0 auto 48px; display: grid; justify-items: center; gap: 20px; }
+    .phone {
+      width: min(280px, 72vw);
+      aspect-ratio: 1206 / 2622;
+      padding: 6px;
+      border-radius: 40px;
+      background: #1C1B19;
+      box-shadow: 0 24px 60px var(--shadow), 0 2px 6px var(--shadow);
+    }
+    .screen {
+      position: relative;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 34px;
+      background: var(--background);
+    }
+    .screen img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 900ms ease;
+    }
+    .screen img.current { opacity: 1; }
+    .caption { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; min-height: 1.5em; text-align: center; }
+    .dots { display: flex; gap: 4px; }
+    .dots button {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: none;
+      background: none;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .dots button::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      opacity: 0.35;
+      transition: opacity 300ms ease, background 300ms ease, transform 300ms ease;
+    }
+    .dots button[aria-pressed="true"]::before { background: var(--green); opacity: 1; transform: scale(1.25); }
+    .dots button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; border-radius: 50%; }
+    @media (prefers-color-scheme: dark) {
+      .phone { background: #36322C; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .screen img, .dots button::before { transition: none; }
+    }
     .card {
       background: var(--card);
       border-radius: 20px;
@@ -112,6 +167,33 @@
       </a>
     </header>
 
+    <section class="showcase" aria-label="The app">
+      <div class="phone">
+        <div class="screen">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="screens/home-dark.jpg">
+            <img class="current" src="screens/home.jpg" alt="Home screen: you're owed £360.61, with balances for Alex and Atharva" data-caption="Who owes who, at a glance." width="660" height="1435">
+          </picture>
+          <img src="screens/add-expense.jpg" alt="Adding an expense: you paid £90 for dinner, split equally with Atharva" data-caption="Add a bill in seconds." width="660" height="1435" loading="lazy">
+          <img src="screens/siri.jpg" alt="Siri adding £23 of groceries, split three ways between you, Alex and Atharva" data-caption="Just tell Siri." width="660" height="1435" loading="lazy">
+          <img src="screens/currency.jpg" alt="Adding an expense in euros: €35 for lunch, split three ways, £29.53 in pounds" data-caption="Spend in any currency. It converts to yours." width="660" height="1435" loading="lazy">
+          <img src="screens/pay-up.jpg" alt="Paying Alex £331.06, which squares you up" data-caption="The fewest payments to a clean slate." width="660" height="1435" loading="lazy">
+          <img src="screens/activity.jpg" alt="Activity: Airbnb, jet ski, groceries and bills, each showing who shared it" data-caption="Every expense and payment, in one place." width="660" height="1435" loading="lazy">
+          <img src="screens/invite.jpg" alt="Inviting people to the Flat group with a QR code and a link to share" data-caption="Bring everyone in with one link." width="660" height="1435" loading="lazy">
+        </div>
+      </div>
+      <p class="caption" id="screen-caption">Who owes who, at a glance.</p>
+      <div class="dots">
+        <button type="button" aria-label="Show screen 1: Who owes who, at a glance." aria-pressed="true"></button>
+        <button type="button" aria-label="Show screen 2: Add a bill in seconds." aria-pressed="false"></button>
+        <button type="button" aria-label="Show screen 3: Just tell Siri." aria-pressed="false"></button>
+        <button type="button" aria-label="Show screen 4: Spend in any currency. It converts to yours." aria-pressed="false"></button>
+        <button type="button" aria-label="Show screen 5: The fewest payments to a clean slate." aria-pressed="false"></button>
+        <button type="button" aria-label="Show screen 6: Every expense and payment, in one place." aria-pressed="false"></button>
+        <button type="button" aria-label="Show screen 7: Bring everyone in with one link." aria-pressed="false"></button>
+      </div>
+    </section>
+
     <section class="card" aria-label="Features">
       <div class="feature">
         <h2>Share the costs</h2>
@@ -159,6 +241,41 @@
 
     <footer>OurSlate for iPhone · <a href="privacy.html" style="color: inherit;">Privacy Policy</a></footer>
   </main>
+  <script>
+    // Crossfade through the app's screens. A fade doesn't move anything, so it runs under reduced
+    // motion too. Picking a screen with the dots stops the rotation for good.
+    const screenImages = [...document.querySelectorAll(".screen img")];
+    const screenDots = [...document.querySelectorAll(".dots button")];
+    const screenCaption = document.getElementById("screen-caption");
+    let shownScreen = 0;
+    let rotation;
+    let rotates = true;
+
+    function showScreen(index) {
+      screenImages[shownScreen].classList.remove("current");
+      screenDots[shownScreen].setAttribute("aria-pressed", "false");
+      shownScreen = index;
+      screenImages[shownScreen].classList.add("current");
+      screenDots[shownScreen].setAttribute("aria-pressed", "true");
+      screenCaption.textContent = screenImages[shownScreen].dataset.caption;
+    }
+
+    function startRotation() {
+      if (!rotates) return;
+      clearInterval(rotation);
+      rotation = setInterval(() => showScreen((shownScreen + 1) % screenImages.length), 4000);
+    }
+
+    screenDots.forEach((dot, index) => dot.addEventListener("click", () => {
+      rotates = false;
+      clearInterval(rotation);
+      showScreen(index);
+    }));
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) clearInterval(rotation); else startRotation();
+    });
+    startRotation();
+  </script>
   <script>
     // Send without leaving the page; without JavaScript the form posts normally instead.
     const form = document.getElementById("contact-form");
