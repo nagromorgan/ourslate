@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["QT79A354UX.nagrom.ourslate"],
+        "components": [
+          { "/": "/join/*", "comment": "Invite links: https://ourslate.app/join/<code>" }
+        ]
+      }
+    ]
+  }
+}
